@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+from subprocess import check_call as cc
+from os.path import *
+import json
+
+# wipe existing vim config
+cc( [ "rm", "-rf", expanduser( "~/.vim" ), expanduser( "~/.vimrc" ) ] )
+cc( [ "mkdir", expanduser( "~/.vim" ) ] )
+
+with open( "assets/vim-resources.json" ) as f:
+    vimres = json.loads( f.read() )
+
+for k,v in vimres["basic"].items():
+    path = expanduser( join( "~/.vim/", k ) )
+    cc( [ "mkdir", "-p", dirname( path ) ] )
+    cc( [ "wget", "-O", path, v ] )
+
+for k,v in vimres["pathogen"].items():
+    path = expanduser( join( "~/.vim/bundle", k ) )
+    cc( [ "mkdir", "-p", dirname( path ) ] )
+    cc( [ "git", "clone", v, path ] )
+
+cc( [ "cp", "assets/vimrc", expanduser( "~/.vimrc" ) ] )
+cc( [ "cp", "assets/eslintrc.json", expanduser( "~/.eslintrc.json" ) ] )

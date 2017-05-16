@@ -1,0 +1,17 @@
+{
+    "pathogen" : {
+        "ctrlp"     : "https://github.com/kien/ctrlp.vim",
+        "nerdtree"  : "https://github.com/scrooloose/nerdtree",
+        "syntastic" : "https://github.com/vim-syntastic/syntastic",
+        "tabular"   : "https://github.com/godlygeek/tabular"
+    },
+
+    "basic" : {
+        "syntax/python.vim"     : "https://raw.githubusercontent.com/hdima/python-syntax/master/syntax/python.vim",
+        "syntax/haskell.vim"    : "https://raw.githubusercontent.com/neovimhaskell/haskell-vim/master/syntax/haskell.vim",
+        "syntax/javascript.vim" : "https://raw.githubusercontent.com/jelera/vim-javascript-syntax/master/syntax/javascript.vim",
+        "colors/gruvbox.vim"    : "https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim",
+        "autoload/pathogen.vim" : "https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim"
+    }
+
+}

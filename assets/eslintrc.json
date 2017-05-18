@@ -4,11 +4,16 @@
         "node": true,
         "browser" : true
     },
-    "extends": "eslint:recommended",
+    "plugins" : [
+        "react"
+    ],
+    "extends": [ "eslint:recommended", "plugin:react/recommended" ],
     "parserOptions": {
         "sourceType": "module",
         "ecmaVersion" : 8,
-        "ecmaFeatures" : { "jsx" : true }
+        "ecmaFeatures" : {
+            "jsx" : true
+        }
     },
     "rules": {
         "no-unused-vars" : [
@@ -31,6 +36,9 @@
         "semi": [
             "error",
             "always"
-        ]
+        ],
+        "react/no-render-return-value" : "off",
+        "react/prop-types" : "off",
+        "react/display-name" : "off"
     }
 }

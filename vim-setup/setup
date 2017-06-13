@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+from subprocess import check_call as cc
+from os.path import expanduser, join, dirname
+import json
+
+base_dir = dirname( __file__ )
+
+# wipe existing vim config
+cc( [ "rm", "-rf", expanduser( "~/.vim" ), expanduser( "~/.vimrc" ) ] )
+cc( [ "mkdir", expanduser( "~/.vim" ) ] )
+
+with open( join( base_dir, "assets/vim-resources.json" ) ) as f:
+    vimres = json.loads( f.read() )
+
+pathogen_path = expanduser( "~/.vim/autoload/pathogen.vim" )
+cc( [ "mkdir", "-p", dirname( pathogen_path ) ] )
+cc( [ "wget", "-O", pathogen_path, vimres[ "pathogen" ][ "install" ] ] )
+
+for k, v in vimres["pathogen"]["plugins"].items():
+    path = expanduser( join( "~/.vim/bundle", k ) )
+    cc( [ "mkdir", "-p", dirname( path ) ] )
+    cc( [ "git", "clone", v, path ] )
+
+cc( [ "cp", join( base_dir, "assets/vimrc" ), expanduser( "~/.vimrc" ) ] )

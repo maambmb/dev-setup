@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+from os.path import dirname, join, basename
+import boto3, zipfile, tempfile, uuid, os
+
+lambdac = boto3.client( "lambda" )
+iamc    = boto3.client( "iam" )
+
+base_dir = dirname( __file__ )
+
+def list_py( dir ):
+    return ( x for x in os.listdir( dir ) if x.endswith( ".py" ) )
+
+def deploy():
+
+    for script in list_py( join( base_dir, "glue" ) ):
+
+        # generate the file path for our temporary zip
+        tempf = join( tempfile.gettempdir(), str( uuid.uuid4() ) ) + ".zip"
+
+        with zipfile.ZipFile( tempf, "w" ) as zf:
+            # add the script to the zip file
+            print( "zipping: {0}".format( script ) )
+            zf.write( join( base_dir, "glue", script ), script )
+            for lib in list_py( join( base_dir, "lib" ) ):
+                print( "zipping library: {0}".format( lib ) )
+                zf.write( join( base_dir, "lib", lib ), join( "lib", lib ) )
+
+        # read the zipfile back as a bytestring
+        with open(tempf, "rb") as zf:
+            zip_data = zf.read()
+
+        fn_name = basename( script ).split( "." )[0]
+        print( "deploying lambda function: {0}".format( fn_name ) )
+
+        # perform the lambda fn update
+        lambdac.update_function_code(
+            FunctionName = fn_name,
+            ZipFile = zip_data
+        )
+
+
+deploy()

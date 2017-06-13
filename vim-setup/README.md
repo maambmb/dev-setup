@@ -1,13 +1,13 @@
 Vim Setup
 =========
 
-# Usage
+## Usage
 
 ```
-    python3 setup
+python3 setup
 ```
 
-# Actions
+## Actions
 
   1. Wipes all vim settings and plugins
   2. Installs pathogen plugin manager

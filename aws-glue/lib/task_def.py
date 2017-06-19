@@ -38,30 +38,30 @@ def register( **kwargs ):
 
 def list_arns( **kwargs ):
 
-    kwargs = dict(
+    boto_kwargs = dict(
         familyPrefix = kwargs["family"],
         status       = kwargs.get("status", "ACTIVE" )
     )
 
     while True:
-        resp = ecsc.list_task_definitions( ** kwargs )
+        resp = ecsc.list_task_definitions( ** boto_kwargs )
         for arn in resp["taskDefinitionArns"]:
             yield arn
         if "nextToken" not in resp:
             return
-        kwargs["nextToken"] = resp["nextToken"]
+        boto_kwargs["nextToken"] = resp["nextToken"]
 
 def list_families( **kwargs ):
 
-    kwargs = dict(
+    boto_kwargs = dict(
         familyPrefix = kwargs["prefix"],
         status       = kwargs.get( "status", "ACTIVE" )
     )
 
     while True:
-        resp = ecsc.list_task_definition_families( ** kwargs )
+        resp = ecsc.list_task_definition_families( ** boto_kwargs )
         for family in resp["families"]:
             yield family
         if "nextToken" not in resp:
             return
-        kwargs["nextToken"] = resp["nextToken"]
+        boto_kwargs["nextToken"] = resp["nextToken"]

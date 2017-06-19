@@ -4,20 +4,20 @@ ecrc = boto3.client( "ecr" )
 
 def get_tags( ** kwargs ):
 
-    kwargs = dict(
+    boto_kwargs = dict(
         registryId     = str(kwargs["account_id"]),
         repositoryName = kwargs["repository_name"]
     )
 
     while True:
-        resp = ecrc.list_images( **kwargs )
+        resp = ecrc.list_images( **boto_kwargs )
         for img in resp["imageIds"]:
             tag = img["imageTag"]
-            if "project" not in kwargs or tag.split(".")[0] == kwargs["project"]:
+            if tag.split(".")[0] == kwargs["project"]:
                 yield tag
         if "nextToken" not in resp:
             return
-        kwargs["nextToken"] = resp["nextToken"]
+        boto_kwargs["nextToken"] = resp["nextToken"]
 
 def delete_tags( **kwargs ):
     ecrc.batch_delete_image(

@@ -16,6 +16,7 @@ def register( **kwargs ):
 
         env = [
             { "name" : "ZONE", "value" : kwargs["zone"] },
+            { "name" : "TASK_DEF", "value" : kwargs["task_def"] }
         ]
 
         container_defs.append( dict(

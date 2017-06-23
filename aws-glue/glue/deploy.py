@@ -27,9 +27,10 @@ def deploy( event, ctx ):
 
                 cfg = json.loads( zipf.read( path ).decode( "utf-8" ) )
 
+                tdef = os.path.splitext( os.path.basename( path ) )[0]
                 resource_key = task_def.resource_key(
                     project  = core["project"],
-                    task_def = os.path.splitext( os.path.basename( path ) )[0],
+                    task_def = tdef,
                     zone     = zone
                 )
 
@@ -39,6 +40,7 @@ def deploy( event, ctx ):
                     zone         = zone,
                     image        = img,
                     role         = role,
+                    task_def     = tdef,
                     resource_key = resource_key,
                     region       = core["region"],
                     log_group    = core["logGroup"],

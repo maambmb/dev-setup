@@ -27,33 +27,27 @@ def deploy( event, ctx ):
 
                 cfg = json.loads( zipf.read( path ).decode( "utf-8" ) )
 
-                tdef = os.path.splitext( os.path.basename( path ) )[0]
-                resource_key = task_def.resource_key(
-                    project  = core["project"],
-                    task_def = tdef,
-                    zone     = zone
+                res_key = task_def.ResourceKey(
+                    project = core["project"],
+                    variant = os.path.splitext( os.path.basename( path ) )[0],
+                    zone    = zone
                 )
 
                 # REGISTER TASK DEF
-                print( "registering task definition: {0}".format( resource_key ) )
+                print( "registering task definition: {0}".format( res_key ) )
                 task_def.register(
-                    zone         = zone,
-                    image        = img,
-                    role         = role,
-                    task_def     = tdef,
-                    resource_key = resource_key,
-                    region       = core["region"],
-                    log_group    = core["logGroup"],
-                    containers   = cfg["containers"]
+                    res_key,
+                    image      = img,
+                    role       = role,
+                    region     = core["region"],
+                    log_group  = core["logGroup"],
+                    containers = cfg["containers"]
                 )
 
                 # UPDATE SERVICE
                 if cfg.get("service", False ):
-                    print( "attempting to update service: {0}".format( resource_key ) )
-                    service.try_update_service(
-                        cluster      = core["cluster"],
-                        resource_key = resource_key
-                    )
+                    print( "attempting to update service: {0}".format( res_key ) )
+                    service.try_update_service( res_key, cluster = core["cluster"] )
 
         cpc.put_job_success_result( jobId = job_id )
 
@@ -61,5 +55,5 @@ def deploy( event, ctx ):
         traceback.print_exc()
         cpc.put_job_failure_result(
             failureDetails = dict( type = "JobFailed", message = str(e) ),
-            jobId          = job_id
+            jobId = job_id
         )

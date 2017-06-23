@@ -26,5 +26,8 @@ def delete_tags( **kwargs ):
         imageIds       = [ { "imageTag" : x } for x in kwargs["tags"] ]
     )
 
-def parse_tag( uri ):
-    return uri.split("/")[1].split(":")[1]
+def parse_tag( **kwargs ):
+    if "uri" in kwargs:
+        kwargs["tag"] = kwargs["uri"].split("/")[1].split(":")[1]
+    project, ts = kwargs["tag"].split( "." )
+    return ( project, int( ts ) )

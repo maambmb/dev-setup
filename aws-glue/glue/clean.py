@@ -1,12 +1,9 @@
 from lib import task_def, image
-import boto3
+import boto3, sys
 
 ecsc = boto3.client( "ecs" )
 
 def clean( cfg, ctx ):
-
-    tags_to_keep   = set()
-    tags_to_delete = set()
 
     # FOR EACH TASK FAMILY IN A PROJECT
     print( "grabbing all task def families for project" )
@@ -33,14 +30,15 @@ def clean( cfg, ctx ):
             print( "deregistering revision: {0}".format( tdef["revision"] ) )
             ecsc.deregister_task_definition( taskDefinition = tdef["arn"] )
 
-        # GRAB IMAGES FOR REMAINING ACTIVE TASK DEFS
+        # GRAB IMAGES FOR REMAINING ACTIVE TASK DEFS AND GET OLDEST TIMESTAMP
+        cutoff_ts = sys.maxsize
         for tdef in tdefs:
             if "_marked" not in tdef:
                 for img in tdef["images"]:
-                    tags_to_keep.add( image.parse_tag( img ) )
+                    cutoff_ts = min( cutoff_ts, image.parse_tag( uri = img )[1] )
 
-    # FIND COMPLEMENT SET OF IMAGES AND DELETE
-    tags_to_delete = set( x for x in image.get_tags( ** cfg ) if x not in tags_to_keep )
+    # DELETE ALL IMAGES WITH OLDER TIMESTAMPS
+    tags_to_delete = [ x for x in image.get_tags( ** cfg ) if image.parse_tag( tag = x )[1] < cutoff_ts ]
     if len(tags_to_delete) > 0:
-        print( "deleting orphaned images" )
+        print( "deleting {0} orphaned images".format( len( tags_to_delete ) ) )
         image.delete_tags( ** cfg, tags = tags_to_delete )

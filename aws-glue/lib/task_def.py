@@ -3,7 +3,7 @@ import boto3
 ecsc = boto3.client( "ecs" )
 
 def resource_key( ** kwargs ):
-    return "-".join( [ kwargs["project"], kwargs["variant"], kwargs["zone"] ] )
+    return "-".join( [ kwargs["project"], kwargs["task_def"], kwargs["zone"] ] )
 
 def register( **kwargs ):
     taskd = "taskd-{0}".format( kwargs["resource_key"] )
@@ -11,16 +11,22 @@ def register( **kwargs ):
     for key, container in kwargs["containers"].items():
 
         ports = container.get( "ports", list() )
-        ports = [ dict( hostPort = h, containerPort = c, protocol = "tcp" ) for [ c, h ] in ports ]
+        ports = [ dict( hostPort = 0, containerPort = p, protocol = "tcp" ) for p in ports ]
+        soft, hard = container["memory"]
+
+        env = [
+            { "name" : "ZONE", "value" : kwargs["zone"] },
+        ]
 
         container_defs.append( dict(
-            name             = key,
-            portMappings     = ports,
-            image            = kwargs[ "image" ],
-            command          = container[ "main" ],
-            environment      = [ dict( name = "ZONE", value = kwargs["zone"] ) ],
-            memory           = container[ "memory" ],
-            logConfiguration = dict(
+            name              = key,
+            portMappings      = ports,
+            image             = kwargs[ "image" ],
+            command           = container[ "main" ],
+            environment       = env,
+            memoryReservation = soft,
+            memory            = hard,
+            logConfiguration  = dict(
                 logDriver = "awslogs",
                 options   = {
                     "awslogs-group"         : kwargs["log_group"],

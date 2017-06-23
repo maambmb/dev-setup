@@ -1,4 +1,4 @@
-import boto3, json, traceback
+import boto3, json, traceback, os
 from lib import artifact, task_def, service
 
 iamc = boto3.client( "iam" )
@@ -12,42 +12,46 @@ def deploy( event, ctx ):
         job_data   = event["CodePipeline.job"]["data"]
         zone       = job_data["actionConfiguration"]["configuration"]["UserParameters"]
 
-        # UNPACK ARTIFACT DATA
+        core_path   = os.path.join( "cfg", zone, "core.json" )
+        tdef_prefix = os.path.join( "cfg", zone, "taskdef" )
+
         with artifact.get_data( event ) as zipf:
-            tgt_image = zipf.read( "tgt_image" ).decode("utf-8").strip()
-            purpose   = json.loads( zipf.read( "purpose.json" ).decode( "utf-8" ) )
-            common    = json.loads( zipf.read( "common.json" ).decode( "utf-8" ) )
-            site      = json.loads( zipf.read( "site.json" ).decode( "utf-8" ) )[ zone ]
+            img  = zipf.read("tgt_image").decode("utf-8")
+            core = json.loads( zipf.read( core_path ).decode( "utf-8" ) )
+            role = iamc.get_role( RoleName = core["taskRole"] )["Role"]["Arn"]
 
-        role = iamc.get_role( RoleName = common["taskRole"] )["Role"]["Arn"]
-        for variant, cfg in purpose.items():
+            for path in zipf.namelist():
 
-            resource_key = task_def.resource_key(
-                project = common["project"],
-                variant = variant,
-                zone    = zone
-            )
+                if not path.startswith( tdef_prefix ):
+                    continue
 
-            # REGISTER TASK DEF
-            print( "registering task definition: {0}".format( resource_key ) )
-            task_def.register(
-                zone         = zone,
-                image        = tgt_image,
-                role         = role,
-                variant      = variant,
-                resource_key = resource_key,
-                region       = common["region"],
-                log_group    = site["logGroup"],
-                containers   = cfg["containers"]
-            )
+                cfg = json.loads( zipf.read( path ).decode( "utf-8" ) )
 
-            # UPDATE SERVICE
-            if cfg.get("service", False ):
-                print( "attempting to update service: {0}".format( resource_key ) )
-                service.try_update_service(
-                    cluster      = site["cluster"],
-                    resource_key = resource_key
+                resource_key = task_def.resource_key(
+                    project  = core["project"],
+                    task_def = os.path.splitext( os.path.basename( path ) )[0],
+                    zone     = zone
                 )
+
+                # REGISTER TASK DEF
+                print( "registering task definition: {0}".format( resource_key ) )
+                task_def.register(
+                    zone         = zone,
+                    image        = img,
+                    role         = role,
+                    resource_key = resource_key,
+                    region       = core["region"],
+                    log_group    = core["logGroup"],
+                    containers   = cfg["containers"]
+                )
+
+                # UPDATE SERVICE
+                if cfg.get("service", False ):
+                    print( "attempting to update service: {0}".format( resource_key ) )
+                    service.try_update_service(
+                        cluster      = core["cluster"],
+                        resource_key = resource_key
+                    )
 
         cpc.put_job_success_result( jobId = job_id )
 
